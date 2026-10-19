@@ -1,11 +1,12 @@
 """Poll approved jobs and generate truthful drafts. Never submit applications."""
-import os, time, sqlite3, traceback
-from app.main import DB, tailor
+from contextlib import closing
+import os, time, traceback
+from app.main import db, tailor
 
 POLL = max(10, int(os.getenv('APPROVAL_POLL_SECONDS', '20')))
 
 def claim():
-    with sqlite3.connect(DB, timeout=30) as c:
+    with closing(db()) as c, c:
         c.execute('BEGIN IMMEDIATE')
         row = c.execute("SELECT id FROM jobs WHERE status='approved' AND classification='eligible' ORDER BY score DESC LIMIT 1").fetchone()
         if not row:
@@ -14,7 +15,7 @@ def claim():
         return row[0]
 
 def failed(job_id, error):
-    with sqlite3.connect(DB, timeout=30) as c:
+    with closing(db()) as c, c:
         c.execute("UPDATE jobs SET status='tailor_failed', reason=? WHERE id=? AND status='tailoring'", (str(error)[:300], job_id))
 
 if __name__ == '__main__':
