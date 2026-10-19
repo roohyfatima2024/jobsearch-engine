@@ -65,7 +65,9 @@ migration. The command for an authorized target is
 `python3 -m app.migrations --database /explicit/path/to/database.sqlite3`.
 This implementation has **not** been run against production. Do not use Docker
 commands from the installation section as part of the temporary trial: current
-Compose services mount the production data directory. Docker definitions and
-running services are unchanged; deploying the new code requires a separate,
-authorized rollout. The dashboard has its own build context and keeps using the
-shared schema without importing migration code.
+Compose services mount the production data directory. Running services are
+unchanged; deploying the new code requires a separate, authorized rollout. The dashboard image now builds from the repository root and
+includes `app.migrations` for schema validation. Rebuild the dashboard image for
+a future rollout. Dashboard connections require the current migration history
+and schema before querying or updating jobs; they never run migrations. An
+unmigrated or incompatible database produces the existing generic HTTP 500 response.

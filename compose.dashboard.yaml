@@ -2,8 +2,8 @@ services:
   dashboard:
     user: "1000:1000"
     build:
-      context: ./dashboard
-      dockerfile: Dockerfile.dashboard
+      context: .
+      dockerfile: dashboard/Dockerfile.dashboard
     volumes:
       - ./data:/workspace/data
       - ./resumes:/workspace/resumes:ro

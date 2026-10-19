@@ -1,4 +1,6 @@
 import os, sqlite3, html, urllib.parse, json
+from contextlib import closing
+from app.migrations import require_current
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 DB=Path(os.environ.get('JOBS_DB','/workspace/data/jobs.sqlite3'))
@@ -6,7 +8,14 @@ RESUMES=Path(os.environ.get('RESUMES_DIR','/workspace/resumes'))
 HOST='127.0.0.1'; PORT=8765
 CSS='''body{font-family:system-ui,Arial;background:#f6f7fb;color:#172033;margin:0}main{max-width:1100px;margin:32px auto;padding:0 18px}header{display:flex;justify-content:space-between;align-items:center}article{background:white;border:1px solid #e0e4eb;border-radius:12px;padding:18px;margin:14px 0}small{color:#64748b}.pill{display:inline-block;background:#edf2ff;padding:5px 10px;border-radius:30px}button,.btn{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;background:#1e40af;color:white;text-decoration:none;display:inline-block}button.reject{background:#a21caf}button.reset{background:#475569}a{color:#1d4ed8}form{display:inline-block;margin-right:6px}nav a{margin-right:12px}pre{white-space:pre-wrap;word-break:break-word;background:#f1f5f9;padding:16px;border-radius:8px}input{padding:10px;border:1px solid #ccc;border-radius:8px}'''
 def conn():
- c=sqlite3.connect(f'file:{DB}?mode=rw',uri=True);c.row_factory=sqlite3.Row;return c
+ c=sqlite3.connect(DB.resolve().as_uri()+'?mode=rw',uri=True)
+ try:
+  require_current(c)
+  c.row_factory=sqlite3.Row
+ except BaseException:
+  c.close()
+  raise
+ return c
 def esc(s):return html.escape(str(s if s is not None else ''))
 def layout(body):return f'<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Private Job Review</title><style>{CSS}</style></head><body><main><header><h1>Job Review</h1><small>Private · SSH tunnel</small></header>{body}</main></body></html>'
 class Handler(BaseHTTPRequestHandler):
@@ -16,7 +25,7 @@ class Handler(BaseHTTPRequestHandler):
  def do_GET(self):
   u=urllib.parse.urlsplit(self.path);q=urllib.parse.parse_qs(u.query)
   try:
-   with conn() as c:
+   with closing(conn()) as c, c:
     if u.path=='/':
      status=q.get('status',['all'])[0];allowed=['review','approved','rejected','draft_ready','all'];status=status if status in allowed else 'all'
      classification=q.get('classification',['needs_review'])[0];categories=['needs_review','eligible','low_match','excluded','all'];classification=classification if classification in categories else 'needs_review'
@@ -73,7 +82,7 @@ class Handler(BaseHTTPRequestHandler):
    if n>4096:return self.send(413,'Too large')
    d=urllib.parse.parse_qs(self.rfile.read(n).decode());jid=d.get('id',[''])[0];status=d.get('status',[''])[0]
    if status not in ('approved','rejected','review'):return self.send(400,'Invalid status')
-   with conn() as c:
+   with closing(conn()) as c, c:
                 if status == 'approved':
                     job = c.execute(
                         'SELECT classification FROM jobs WHERE id=?',
