@@ -1,0 +1,15 @@
+services:
+  dashboard:
+    user: "1000:1000"
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile.dashboard
+    volumes:
+      - ./data:/workspace/data
+      - ./resumes:/workspace/resumes:ro
+    network_mode: host
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped

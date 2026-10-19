@@ -1,0 +1,18 @@
+services:
+  approval-worker:
+    build: .
+    working_dir: /workspace
+    command: ["python", "-m", "app.approval_worker"]
+    volumes:
+      - ./config:/workspace/config:ro
+      - ./data:/workspace/data
+      - ./resumes:/workspace/resumes
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-5}
+      - APPROVAL_POLL_SECONDS=20
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped

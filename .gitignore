@@ -1,0 +1,47 @@
+# Secrets and environment variables
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*
+*secret*
+
+# Private user data and profiles
+config/verified_profile.txt
+data/
+resumes/
+
+# SQLite databases and backups
+*.sqlite
+*.sqlite3
+*.db
+*.db-*
+*.sqlite3-*
+*.backup
+*.bak
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node.js
+node_modules/
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+.DS_Store
+
+# Old source-code and configuration backups
+*.backup_*
+*.backup.*
+*.before_*
+*.broken.py
+*.backup.py
+config/settings.json

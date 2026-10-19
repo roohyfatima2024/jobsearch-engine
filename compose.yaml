@@ -1,0 +1,16 @@
+services:
+  agent:
+    build: .
+    working_dir: /workspace
+    volumes:
+      - ./config:/workspace/config:ro
+      - ./data:/workspace/data
+      - ./resumes:/workspace/resumes
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-5}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: "no"
